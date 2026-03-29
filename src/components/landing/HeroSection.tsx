@@ -15,32 +15,31 @@ const HeroSection = () => {
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-20 lg:py-28">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
           {/* Left content */}
-          <div className="space-y-4 md:space-y-8">
+          <div className="space-y-4 md:space-y-8 text-center">
             <motion.h1
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-3xl md:text-5xl lg:text-7xl font-display font-bold leading-[1.05] tracking-tight"
+              className="text-3xl md:text-5xl lg:text-6xl font-display font-bold leading-[1.1] tracking-tight"
             >
-              Money moves{" "}
-              <span className="text-gradient-primary">without</span>{" "}
-              borders
+              Ready to move money{" "}
+              <span className="text-[hsl(12,90%,55%)]">freely</span>?
             </motion.h1>
 
             <motion.p
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-base md:text-xl text-muted-foreground max-w-lg leading-relaxed"
+              className="text-base md:text-lg text-muted-foreground max-w-lg leading-relaxed mx-auto"
             >
-              Send and receive money instantly to anyone, anywhere in the world.
+              Join millions of people who trust GlobalPay for fast, secure, and borderless payments.
             </motion.p>
 
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="relative z-50"
+              className="relative z-50 flex justify-center"
             >
               <motion.button
                 whileTap={{ scale: 0.95 }}
