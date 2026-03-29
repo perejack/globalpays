@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Shield } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import heroPhone from "@/assets/hero-phone.png";
 
 const HeroSection = () => {
+  const navigate = useNavigate();
   return (
     <section className="relative min-h-[100dvh] md:min-h-screen bg-gradient-hero overflow-hidden pt-20 md:pt-0">
       {/* Decorative orbs */}
@@ -40,13 +41,13 @@ const HeroSection = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <Link
-                to="/signup"
-                className="group inline-flex items-center gap-2 px-6 py-3 md:px-8 md:py-4 rounded-2xl bg-gradient-primary text-primary-foreground font-semibold text-base md:text-lg shadow-glow hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
+              <button
+                onClick={() => navigate('/signup')}
+                className="group inline-flex items-center gap-2 px-6 py-3 md:px-8 md:py-4 rounded-2xl bg-gradient-primary text-primary-foreground font-semibold text-base md:text-lg shadow-glow hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] touch-manipulation"
               >
                 Open App
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
+              </button>
             </motion.div>
           </div>
 
