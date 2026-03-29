@@ -957,9 +957,25 @@ const HomeTab = ({
           {/* Logo */}
           <div className="flex items-center justify-between mb-3">
             <img src={globalPayLogo} alt="GlobalPay" className="w-20 h-20 object-contain drop-shadow-lg" />
-            <button onClick={() => setBalanceVisible(!balanceVisible)} className="p-2 rounded-xl hover:bg-white/10 transition-colors">
-              {balanceVisible ? <Eye className="w-5 h-5 text-white/70" /> : <EyeOff className="w-5 h-5 text-white/70" />}
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Account Number - Copyable */}
+              <div className="flex flex-col items-end">
+                <span className="text-[10px] text-white/50 uppercase tracking-wider mb-0.5">Account Number</span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText('884729103456');
+                    toast.success('Account number copied!');
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white font-mono text-sm"
+                >
+                  <span>884729103456</span>
+                  <Copy className="w-3 h-3" />
+                </button>
+              </div>
+              <button onClick={() => setBalanceVisible(!balanceVisible)} className="p-2 rounded-xl hover:bg-white/10 transition-colors">
+                {balanceVisible ? <Eye className="w-5 h-5 text-white/70" /> : <EyeOff className="w-5 h-5 text-white/70" />}
+              </button>
+            </div>
           </div>
 
           <p className="text-xs font-medium text-white/60 uppercase tracking-wider">Total Balance</p>
