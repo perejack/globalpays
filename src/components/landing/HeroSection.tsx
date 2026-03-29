@@ -40,14 +40,17 @@ const HeroSection = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
+              className="relative z-50"
             >
-              <button
+              <motion.button
+                whileTap={{ scale: 0.95 }}
                 onClick={() => navigate('/signup')}
-                className="group inline-flex items-center gap-2 px-6 py-3 md:px-8 md:py-4 rounded-2xl bg-gradient-primary text-primary-foreground font-semibold text-base md:text-lg shadow-glow hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] touch-manipulation"
+                className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 md:px-10 md:py-5 rounded-2xl bg-gradient-primary text-primary-foreground font-semibold text-lg shadow-glow hover:shadow-xl transition-all duration-200 min-h-[56px] min-w-[160px] cursor-pointer select-none"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                Open App
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
+                <span className="pointer-events-none">Open App</span>
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform pointer-events-none" />
+              </motion.button>
             </motion.div>
           </div>
 
