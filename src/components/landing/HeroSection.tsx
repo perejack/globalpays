@@ -22,8 +22,8 @@ const HeroSection = () => {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="text-3xl md:text-5xl lg:text-6xl font-display font-bold leading-[1.1] tracking-tight"
             >
-              Ready to move money{" "}
-              <span className="text-[hsl(12,90%,55%)]">freely</span>?
+              Send and receive money{" "}
+              <span className="text-[hsl(12,90%,55%)]">freely</span>
             </motion.h1>
 
             <motion.p
