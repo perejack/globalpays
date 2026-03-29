@@ -2,9 +2,8 @@
 const API_KEY = "h26210DzY5gys";
 const ACCOUNT_ID = "HP345842";
 
-// Use proxy in development, full URL in production
-const isDevelopment = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-const API_BASE_URL = isDevelopment ? "/api/hashback" : "https://api.hashback.co.ke/api/v2";
+// Always use the Vercel proxy API route to avoid CORS issues
+const API_BASE_URL = "/api/hashback";
 
 export interface InitiateSTKPushRequest {
   api_key: string;
