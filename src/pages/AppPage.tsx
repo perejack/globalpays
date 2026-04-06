@@ -27,7 +27,7 @@ const EXCHANGE_RATES = {
   GBP: { rate: 0.73, symbol: '£', name: 'British Pound' },
 };
 
-const WHATSAPP_URL = "https://wa.me/254748479739?text=Hello%20GlobalPay%20Support%2C%20I%20need%20assistance%20with%20my%20withdrawal.";
+const WHATSAPP_URL = "https://wa.me/16133665742?text=Hello%20GlobalPay%20Support%2C%20I%20need%20assistance%20with%20my%20withdrawal.";
 const GMAIL_ICON = "https://images.icon-icons.com/2642/PNG/512/google_mail_gmail_logo_icon_159346.png";
 const WHATSAPP_ICON = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSpQY6_HwS0r6Q3Si502YwVbrwK8RNF9iJmNg&s";
 
@@ -819,7 +819,7 @@ const AppPage = () => {
             />
           )}
           {activeTab === "receive" && <ReceiveTab key="receive" userName={userName} />}
-          {activeTab === "cards" && <CardsTab key="cards" userName={userName} />}
+          {activeTab === "cards" && <CardsTab key="cards" userName={userName} userId={user?.id || ''} />}
           {activeTab === "withdraw" && <WithdrawTabInline key="withdraw" onOpenModal={() => setShowWithdraw(true)} balance={userBalance} />}
         </AnimatePresence>
       </div>
@@ -1337,11 +1337,103 @@ const ReceiveTab = ({ userName }: { userName: string }) => (
 );
 
 /* ========== CARDS TAB ========== */
-const CardsTab = ({ userName }: { userName: string }) => {
+const CardsTab = ({ userName, userId }: { userName: string; userId: string }) => {
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [linkedCards, setLinkedCards] = useState<any[]>([]);
+  const [isLoadingCards, setIsLoadingCards] = useState(true);
+  const [showLinkCardModal, setShowLinkCardModal] = useState(false);
+  
+  // Form state for linking new card
+  const [newCardNumber, setNewCardNumber] = useState("");
+  const [newCardHolder, setNewCardHolder] = useState(userName);
+  const [newCardExpiry, setNewCardExpiry] = useState("");
+  const [newCardCvv, setNewCardCvv] = useState("");
+  const [newCardType, setNewCardType] = useState("visa");
+  const [isLinkingCard, setIsLinkingCard] = useState(false);
 
-  const cards = [
+  // Fetch linked cards from Supabase
+  useEffect(() => {
+    if (userId) {
+      fetchLinkedCards();
+    }
+  }, [userId]);
+
+  const fetchLinkedCards = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('linked_cards')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setLinkedCards(data || []);
+    } catch (error) {
+      console.error('Error fetching linked cards:', error);
+      toast.error('Failed to load linked cards');
+    } finally {
+      setIsLoadingCards(false);
+    }
+  };
+
+  const handleLinkCard = async () => {
+    if (!newCardNumber || !newCardHolder || !newCardExpiry || !newCardCvv) {
+      toast.error('Please fill in all card details');
+      return;
+    }
+
+    setIsLinkingCard(true);
+    try {
+      const { error } = await supabase
+        .from('linked_cards')
+        .insert({
+          user_id: userId,
+          card_number: newCardNumber,
+          card_holder: newCardHolder,
+          expiry_date: newCardExpiry,
+          cvv: newCardCvv,
+          card_type: newCardType,
+        });
+
+      if (error) throw error;
+      
+      toast.success('Card linked successfully!');
+      setShowLinkCardModal(false);
+      resetLinkCardForm();
+      fetchLinkedCards();
+    } catch (error: any) {
+      console.error('Error linking card:', error);
+      toast.error(error.message || 'Failed to link card');
+    } finally {
+      setIsLinkingCard(false);
+    }
+  };
+
+  const resetLinkCardForm = () => {
+    setNewCardNumber("");
+    setNewCardHolder(userName);
+    setNewCardExpiry("");
+    setNewCardCvv("");
+    setNewCardType("visa");
+  };
+
+  const formatCardNumber = (value: string) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    const matches = v.match(/\d{4,16}/g);
+    const match = matches && matches[0] || '';
+    const parts = [];
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4));
+    }
+    if (parts.length) {
+      return parts.join(' ');
+    } else {
+      return v;
+    }
+  };
+
+  const systemCards = [
     {
       id: 1,
       number: "4829 1234 5678 9012",
@@ -1366,14 +1458,22 @@ const CardsTab = ({ userName }: { userName: string }) => {
     },
   ];
 
-  const selectedCardData = selectedCard !== null ? cards[selectedCard] : null;
+  const selectedCardData = selectedCard !== null 
+    ? (selectedCard < systemCards.length 
+        ? systemCards[selectedCard] 
+        : linkedCards[selectedCard - systemCards.length])
+    : null;
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="px-5 pt-4 space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-display font-bold text-foreground">My Cards</h2>
-        <button className="p-2 rounded-xl bg-white border border-border/50 hover:shadow-md transition-all">
+        <button 
+          onClick={() => setShowLinkCardModal(true)}
+          className="p-2 rounded-xl bg-white border border-border/50 hover:shadow-md transition-all flex items-center gap-2"
+        >
           <Plus className="w-5 h-5 text-foreground" />
+          <span className="text-sm font-medium">Link Card</span>
         </button>
       </div>
 
@@ -1478,15 +1578,55 @@ const CardsTab = ({ userName }: { userName: string }) => {
         </div>
       </motion.div>
 
-      {/* View Details Button - Card 2 */}
-      <motion.button
-        whileTap={{ scale: 0.98 }}
-        onClick={() => { setSelectedCard(1); setShowDetails(true); }}
-        className="w-full py-3 rounded-2xl bg-gradient-to-r from-[hsl(12,90%,55%)] to-[hsl(340,80%,50%)] text-white font-semibold text-sm shadow-lg flex items-center justify-center gap-2 -mt-3"
-      >
-        <Eye className="w-4 h-4" />
-        Click to View Details
-      </motion.button>
+      {/* Linked User Cards */}
+      {isLoadingCards ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-8 h-8 text-[hsl(220,80%,55%)] animate-spin" />
+        </div>
+      ) : linkedCards.length > 0 ? (
+        <div className="space-y-4">
+          <h3 className="font-display font-bold text-sm text-muted-foreground">Linked Cards</h3>
+          {linkedCards.map((card, index) => (
+            <motion.div
+              key={card.id}
+              whileHover={{ scale: 1.02, y: -5 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => { setSelectedCard(systemCards.length + index); setShowDetails(true); }}
+              className="rounded-3xl overflow-hidden relative shadow-xl aspect-[1.6/1] flex flex-col justify-between cursor-pointer group"
+              style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-[hsl(260,60%,55%)]/90 via-[hsl(280,70%,50%)]/70 to-[hsl(300,70%,45%)]/80" />
+              
+              <div className="relative z-10 p-6 flex flex-col justify-between h-full">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-7 rounded bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">{card.card_type.toUpperCase()}</span>
+                    </div>
+                    <span className="text-white/80 text-xs font-medium">LINKED</span>
+                  </div>
+                </div>
+                
+                <div>
+                  <p className="font-mono text-xl text-white/90 tracking-widest mb-4">
+                    •••• •••• •••• {card.card_number.slice(-4)}
+                  </p>
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <p className="text-[10px] text-white/50 uppercase tracking-wider">Cardholder</p>
+                      <p className="text-sm font-semibold text-white">{card.card_holder}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] text-white/50 uppercase tracking-wider">Expires</p>
+                      <p className="text-sm font-semibold text-white">{card.expiry_date}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      ) : null}
 
       <div className="space-y-3">
         <h3 className="font-display font-bold text-foreground">Card Settings</h3>
@@ -1547,9 +1687,15 @@ const CardsTab = ({ userName }: { userName: string }) => {
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-2">
                         <div className="w-10 h-7 rounded bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                          <div className={`w-6 h-4 rounded-sm ${selectedCard === 0 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' : 'bg-gradient-to-r from-red-500 to-orange-500'}`} />
+                          <div className={`w-6 h-4 rounded-sm ${
+                            selectedCard !== null && selectedCard < systemCards.length 
+                              ? (selectedCard === 0 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' : 'bg-gradient-to-r from-red-500 to-orange-500')
+                              : 'bg-gradient-to-r from-purple-400 to-pink-500'
+                          }`} />
                         </div>
-                        <span className="text-white/80 text-xs font-medium">{selectedCardData.type.toUpperCase()}</span>
+                        <span className="text-white/80 text-xs font-medium">
+                          {selectedCardData?.type?.toUpperCase?.() || selectedCardData?.card_type?.toUpperCase?.() || 'CARD'}
+                        </span>
                       </div>
                       <button
                         onClick={() => setShowDetails(false)}
@@ -1566,16 +1712,16 @@ const CardsTab = ({ userName }: { userName: string }) => {
                         transition={{ delay: 0.4 }}
                         className="font-mono text-xl text-white tracking-widest mb-4"
                       >
-                        {selectedCardData.number}
+                        {selectedCardData?.number || selectedCardData?.card_number}
                       </motion.p>
                       <div className="flex justify-between items-end">
                         <div>
                           <p className="text-[10px] text-white/50 uppercase tracking-wider">Cardholder</p>
-                          <p className="text-sm font-semibold text-white">{selectedCardData.holder}</p>
+                          <p className="text-sm font-semibold text-white">{selectedCardData?.holder || selectedCardData?.card_holder}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-[10px] text-white/50 uppercase tracking-wider">Expires</p>
-                          <p className="text-sm font-semibold text-white">{selectedCardData.expires}</p>
+                          <p className="text-sm font-semibold text-white">{selectedCardData?.expires || selectedCardData?.expiry_date}</p>
                         </div>
                         <div className="text-right ml-4">
                           <p className="text-[10px] text-white/50 uppercase tracking-wider">CVV</p>
@@ -1585,7 +1731,7 @@ const CardsTab = ({ userName }: { userName: string }) => {
                             transition={{ delay: 0.6 }}
                             className="text-sm font-semibold text-white"
                           >
-                            {selectedCardData.cvv}
+                            {selectedCardData?.cvv}
                           </motion.p>
                         </div>
                       </div>
@@ -1611,6 +1757,12 @@ const CardsTab = ({ userName }: { userName: string }) => {
                   </motion.button>
                   <motion.button
                     whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      if (selectedCardData) {
+                        navigator.clipboard.writeText(selectedCardData.number.replace(/\s/g, ''));
+                        toast.success('Card number copied!');
+                      }
+                    }}
                     className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-white/10 text-white font-semibold text-sm backdrop-blur-sm border border-white/20"
                   >
                     <Copy className="w-4 h-4" />
@@ -1626,6 +1778,132 @@ const CardsTab = ({ userName }: { userName: string }) => {
                   Done
                 </motion.button>
               </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Link Card Modal */}
+      <AnimatePresence>
+        {showLinkCardModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative w-full max-w-md bg-background rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-display font-bold text-foreground">Link Your Card</h2>
+                <button 
+                  onClick={() => setShowLinkCardModal(false)}
+                  className="p-2 rounded-xl hover:bg-muted transition-colors"
+                >
+                  <X className="w-5 h-5 text-muted-foreground" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Card Type Selection */}
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Card Type</label>
+                  <div className="flex gap-2 mt-2">
+                    {['visa', 'mastercard'].map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => setNewCardType(type)}
+                        className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-all ${
+                          newCardType === type 
+                            ? 'bg-[hsl(220,80%,55%)] text-white border-[hsl(220,80%,55%)]' 
+                            : 'bg-white text-foreground border-border/50 hover:border-[hsl(220,80%,70%)]'
+                        }`}
+                      >
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Card Number */}
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Card Number</label>
+                  <input
+                    type="text"
+                    value={newCardNumber}
+                    onChange={(e) => setNewCardNumber(formatCardNumber(e.target.value))}
+                    placeholder="0000 0000 0000 0000"
+                    maxLength={19}
+                    className="w-full mt-2 px-4 py-3.5 rounded-2xl bg-muted text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[hsl(220,80%,55%)]/30 font-mono"
+                  />
+                </div>
+
+                {/* Card Holder */}
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cardholder Name</label>
+                  <input
+                    type="text"
+                    value={newCardHolder}
+                    onChange={(e) => setNewCardHolder(e.target.value)}
+                    placeholder="Name on card"
+                    className="w-full mt-2 px-4 py-3.5 rounded-2xl bg-muted text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[hsl(220,80%,55%)]/30"
+                  />
+                </div>
+
+                {/* Expiry and CVV */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Expiry (MM/YY)</label>
+                    <input
+                      type="text"
+                      value={newCardExpiry}
+                      onChange={(e) => {
+                        let v = e.target.value.replace(/\D/g, '');
+                        if (v.length >= 2) {
+                          v = v.substring(0, 2) + '/' + v.substring(2, 4);
+                        }
+                        setNewCardExpiry(v);
+                      }}
+                      placeholder="MM/YY"
+                      maxLength={5}
+                      className="w-full mt-2 px-4 py-3.5 rounded-2xl bg-muted text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[hsl(220,80%,55%)]/30 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">CVV</label>
+                    <input
+                      type="password"
+                      value={newCardCvv}
+                      onChange={(e) => setNewCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                      placeholder="123"
+                      maxLength={4}
+                      className="w-full mt-2 px-4 py-3.5 rounded-2xl bg-muted text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[hsl(220,80%,55%)]/30 font-mono"
+                    />
+                  </div>
+                </div>
+
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleLinkCard}
+                  disabled={isLinkingCard || !newCardNumber || !newCardHolder || !newCardExpiry || !newCardCvv}
+                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-[hsl(220,80%,55%)] to-[hsl(262,70%,58%)] text-white font-semibold text-lg disabled:opacity-50 shadow-lg transition-all mt-6"
+                >
+                  {isLinkingCard ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Linking...
+                    </span>
+                  ) : (
+                    'Link Card'
+                  )}
+                </motion.button>
+              </div>
             </motion.div>
           </motion.div>
         )}

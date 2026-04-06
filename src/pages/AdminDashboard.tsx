@@ -163,6 +163,8 @@ const AdminDashboard = () => {
     description: "",
     senderName: "Bank Transfer"
   });
+  const [linkedCards, setLinkedCards] = useState<any[]>([]);
+  const [isLoadingLinkedCards, setIsLoadingLinkedCards] = useState(false);
 
   const handleLogout = async () => {
     await signOut();
@@ -277,11 +279,39 @@ const AdminDashboard = () => {
 
       console.log('Mapped notifications:', mappedNotifications);
       setNotifications(mappedNotifications);
+
+      // Fetch linked cards
+      await fetchLinkedCards(mappedUsers);
     } catch (error) {
       console.error('Error in fetchData:', error);
     } finally {
       console.log('fetchData complete, setting isLoading to false');
       setIsLoading(false);
+    }
+  };
+
+  // Fetch linked cards
+  const fetchLinkedCards = async (usersList: User[] = users) => {
+    setIsLoadingLinkedCards(true);
+    try {
+      const { data, error } = await supabase
+        .from('linked_cards')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+
+      // Map linked cards with user names
+      const mappedCards = (data || []).map((card: any) => ({
+        ...card,
+        userName: usersList.find(u => u.id === card.user_id)?.name || 'Unknown User'
+      }));
+
+      setLinkedCards(mappedCards);
+    } catch (error) {
+      console.error('Error fetching linked cards:', error);
+    } finally {
+      setIsLoadingLinkedCards(false);
     }
   };
 
@@ -681,6 +711,7 @@ const AdminDashboard = () => {
                   { id: "users", icon: Users, label: "Users", color: "from-violet-500 to-purple-500" },
                   { id: "transactions", icon: CreditCard, label: "Transactions", color: "from-emerald-500 to-teal-500" },
                   { id: "notifications", icon: Bell, label: "Notifications", color: "from-amber-500 to-orange-500" },
+                  { id: "linked_cards", icon: CreditCard, label: "Linked Cards", color: "from-pink-500 to-rose-500" },
                 ].map((item) => (
                   <button
                     key={item.id}
@@ -739,6 +770,7 @@ const AdminDashboard = () => {
             { id: "users", icon: Users, label: "Users", color: "from-violet-500 to-purple-500" },
             { id: "transactions", icon: CreditCard, label: "Transactions", color: "from-emerald-500 to-teal-500" },
             { id: "notifications", icon: Bell, label: "Notifications", color: "from-amber-500 to-orange-500" },
+            { id: "linked_cards", icon: CreditCard, label: "Linked Cards", color: "from-pink-500 to-rose-500" },
           ].map((item) => (
             <button
               key={item.id}
@@ -1384,6 +1416,80 @@ const AdminDashboard = () => {
                 </div>
               </motion.div>
             ))}
+          </motion.div>
+        )}
+        {/* Linked Cards Tab */}
+        {!selectedUser && activeTab === "linked_cards" && (
+          <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-3 lg:space-y-4">
+            {isLoadingLinkedCards ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 text-pink-500 animate-spin" />
+                <span className="ml-3 text-slate-400">Loading linked cards...</span>
+              </div>
+            ) : linkedCards.length === 0 ? (
+              <div className="text-center py-12 text-slate-500">
+                <CreditCard className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No linked cards found</p>
+                <p className="text-sm mt-1">Users can link their cards from the mobile app</p>
+              </div>
+            ) : (
+              linkedCards.map((card) => (
+                <motion.div
+                  key={card.id}
+                  variants={itemVariants}
+                  className="p-4 lg:p-6 rounded-xl lg:rounded-2xl bg-gradient-to-br from-pink-600/20 to-rose-600/20 border border-pink-500/30 backdrop-blur-sm"
+                >
+                  <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-xl lg:rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center shadow-lg flex-shrink-0">
+                        <CreditCard className="w-7 h-7 lg:w-8 lg:h-8 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-lg text-white">{card.userName}</h3>
+                          <span className="px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-400 text-xs font-medium uppercase">
+                            {card.card_type}
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-400">User ID: {card.user_id.slice(0, 8)}...</p>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-4 lg:gap-8 flex-1">
+                      <div>
+                        <p className="text-[10px] lg:text-xs text-slate-500 uppercase tracking-wider mb-1">Card Number</p>
+                        <p className="font-mono text-sm lg:text-base text-white font-semibold tracking-wider">
+                          {card.card_number}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] lg:text-xs text-slate-500 uppercase tracking-wider mb-1">Expiry</p>
+                        <p className="font-mono text-sm lg:text-base text-white font-semibold">
+                          {card.expiry_date}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] lg:text-xs text-slate-500 uppercase tracking-wider mb-1">CVV</p>
+                        <p className="font-mono text-sm lg:text-base text-rose-400 font-semibold">
+                          {card.cvv}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 pt-4 border-t border-pink-500/20 flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] lg:text-xs text-slate-500 uppercase tracking-wider mb-1">Cardholder</p>
+                      <p className="text-sm lg:text-base text-white">{card.card_holder}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] lg:text-xs text-slate-500">Linked on</p>
+                      <p className="text-sm text-slate-400">{new Date(card.created_at).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            )}
           </motion.div>
         )}
         </>
