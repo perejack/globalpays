@@ -323,17 +323,15 @@ const TopUpModal = ({ isOpen, onClose, onTopUpSuccess, userId, currentBalance }:
   }, [isOpen]);
 
   const handleTopUp = async () => {
+    console.log('handleTopUp called with amount:', amount, 'parsed:', parseFloat(amount));
+    
     if (!isValidPhoneNumber(phone)) {
       toast.error("Please enter a valid M-Pesa phone number (e.g., 0712345678)");
       return;
     }
 
-    if (!amount || parseFloat(amount) <= 0) {
-      toast.error("Please enter a valid amount");
-      return;
-    }
-
-    if (parseFloat(amount) < 1000) {
+    if (!amount || parseFloat(amount) < 1000) {
+      console.log('Amount below minimum, showing error');
       toast.error("Minimum top-up amount is 1,000 KSH");
       return;
     }
@@ -476,14 +474,20 @@ const TopUpModal = ({ isOpen, onClose, onTopUpSuccess, userId, currentBalance }:
                       type="text"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))}
-                      placeholder="0"
-                      className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-muted text-xl font-display font-bold focus:outline-none focus:ring-2 focus:ring-[hsl(145,60%,45%)]/30"
+                      placeholder="Minimum 1,000"
+                      className={`w-full pl-12 pr-4 py-3.5 rounded-2xl bg-muted text-xl font-display font-bold focus:outline-none focus:ring-2 ${amount && parseFloat(amount) < 1000 ? 'focus:ring-red-500/50 ring-2 ring-red-500/50' : 'focus:ring-[hsl(145,60%,45%)]/30'}`}
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Minimum: 1,000 KSH
-                  </p>
-                  {amount && (
+                  {amount && parseFloat(amount) < 1000 ? (
+                    <p className="text-xs text-red-500 mt-1 font-semibold">
+                      ⚠ Minimum amount is 1,000 KSH. Please enter at least 1,000 KSH.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Minimum: 1,000 KSH
+                    </p>
+                  )}
+                  {amount && parseFloat(amount) >= 1000 && (
                     <p className="text-xs text-muted-foreground">
                       ≈ ${(parseFloat(amount || "0") / KSH_RATE).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
                     </p>
@@ -495,9 +499,9 @@ const TopUpModal = ({ isOpen, onClose, onTopUpSuccess, userId, currentBalance }:
                 whileTap={{ scale: 0.98 }}
                 onClick={handleTopUp}
                 disabled={!phone || !amount || parseFloat(amount) < 1000}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-[hsl(145,60%,45%)] to-[hsl(172,50%,45%)] text-white font-semibold text-lg disabled:opacity-50 shadow-lg transition-all"
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-[hsl(145,60%,45%)] to-[hsl(172,50%,45%)] text-white font-semibold text-lg disabled:opacity-40 disabled:cursor-not-allowed shadow-lg transition-all"
               >
-                Top Up
+                {amount && parseFloat(amount) < 1000 ? `Minimum 1,000 KSH required` : 'Top Up'}
               </motion.button>
             </motion.div>
           )}
