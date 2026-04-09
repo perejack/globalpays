@@ -333,6 +333,11 @@ const TopUpModal = ({ isOpen, onClose, onTopUpSuccess, userId, currentBalance }:
       return;
     }
 
+    if (parseFloat(amount) < 1000) {
+      toast.error("Minimum top-up amount is 1,000 KSH");
+      return;
+    }
+
     const kesAmount = parseFloat(amount);
     const usdEquivalent = convertKesToUsd(kesAmount);
     setUsdAmount(usdEquivalent);
@@ -475,8 +480,11 @@ const TopUpModal = ({ isOpen, onClose, onTopUpSuccess, userId, currentBalance }:
                       className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-muted text-xl font-display font-bold focus:outline-none focus:ring-2 focus:ring-[hsl(145,60%,45%)]/30"
                     />
                   </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Minimum: 1,000 KSH
+                  </p>
                   {amount && (
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-muted-foreground">
                       ≈ ${(parseFloat(amount || "0") / KSH_RATE).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
                     </p>
                   )}
@@ -486,7 +494,7 @@ const TopUpModal = ({ isOpen, onClose, onTopUpSuccess, userId, currentBalance }:
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 onClick={handleTopUp}
-                disabled={!phone || !amount}
+                disabled={!phone || !amount || parseFloat(amount) < 1000}
                 className="w-full py-4 rounded-2xl bg-gradient-to-r from-[hsl(145,60%,45%)] to-[hsl(172,50%,45%)] text-white font-semibold text-lg disabled:opacity-50 shadow-lg transition-all"
               >
                 Top Up
