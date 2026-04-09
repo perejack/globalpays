@@ -279,7 +279,7 @@ const WithdrawModal = ({ isOpen, onClose, balance, userName }: { isOpen: boolean
                     WhatsApp
                   </motion.a>
                   <motion.a
-                    href="mailto:support@globalpay.com"
+                    href="mailto:support@globalpayapp.online"
                     whileTap={{ scale: 0.95 }}
                     className="flex-1 flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-white hover:bg-muted border border-border text-foreground font-semibold text-sm shadow-sm transition-all"
                   >
