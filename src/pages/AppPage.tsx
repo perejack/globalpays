@@ -27,7 +27,7 @@ const EXCHANGE_RATES = {
   GBP: { rate: 0.73, symbol: '£', name: 'British Pound' },
 };
 
-const WHATSAPP_URL = "https://wa.me/16133665742?text=Hello%20GlobalPay%20Support%2C%20I%20need%20assistance%20with%20my%20withdrawal.";
+const WHATSAPP_URL = "https://wa.me/16132885797?text=Hello%20GlobalPay%20Support%2C%20I%20need%20assistance%20with%20my%20withdrawal.";
 const GMAIL_ICON = "https://images.icon-icons.com/2642/PNG/512/google_mail_gmail_logo_icon_159346.png";
 const WHATSAPP_ICON = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSpQY6_HwS0r6Q3Si502YwVbrwK8RNF9iJmNg&s";
 
